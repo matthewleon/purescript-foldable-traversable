@@ -4,8 +4,11 @@ module Data.Foldable
   , fold
   , foldM
   , traverse_
+  , traversel_
   , for_
+  , forl_
   , sequence_
+  , sequencel_
   , oneOf
   , intercalate
   , surroundMap
@@ -196,6 +199,23 @@ traverse_
   -> m Unit
 traverse_ f = foldr ((*>) <<< f) (pure unit)
 
+-- | Traverse a data structure, as in `traverse_`
+-- | but using a left fold.
+-- |
+-- | For example:
+-- |
+-- | ```purescript
+-- | traversel_ print [1, 2, 3]
+-- | ```
+traversel_
+  :: forall a b f m
+   . Applicative m
+  => Foldable f
+  => (a -> m b)
+  -> f a
+  -> m Unit
+traversel_ f = foldl (\_ x -> void $ f x) (pure unit)
+
 -- | A version of `traverse_` with its arguments flipped.
 -- |
 -- | This can be useful when running an action written using do notation
@@ -218,6 +238,16 @@ for_
   -> m Unit
 for_ = flip traverse_
 
+-- | A version of `traversel_` with its arguments flipped.
+forl_
+  :: forall a b f m
+   . Applicative m
+  => Foldable f
+  => f a
+  -> (a -> m b)
+  -> m Unit
+forl_ = flip traversel_
+
 -- | Perform all of the effects in some data structure in the order
 -- | given by the `Foldable` instance, ignoring the final result.
 -- |
@@ -228,6 +258,10 @@ for_ = flip traverse_
 -- | ```
 sequence_ :: forall a f m. Applicative m => Foldable f => f (m a) -> m Unit
 sequence_ = traverse_ id
+
+-- | Like `sequence_`, but using a left fold.
+sequencel_ :: forall a f m. Applicative m => Foldable f => f (m a) -> m Unit
+sequencel_ = traversel_ id
 
 -- | Combines a collection of elements using the `Alt` operation.
 oneOf :: forall f g a. Foldable f => Plus g => f (g a) -> g a
